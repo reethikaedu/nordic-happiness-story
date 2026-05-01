@@ -118,6 +118,15 @@
       font-size: 0.9rem;
     }
 
+    .source-note {
+      display: block;
+      margin-top: 0.45rem;
+      font-size: 0.78rem;
+      color: var(--muted);
+      opacity: 0.92;
+      line-height: 1.4;
+    }
+
     .tooltip {
       position: fixed;
       pointer-events: none;
@@ -217,6 +226,7 @@
       <p>At similar GDP levels, Nordic countries still cluster near the top in happiness.</p>
       <p class="chart2-insight"><strong>Same wealth bracket &mdash; very different happiness scores</strong></p>
       <div class="chart-wrap"><svg id="chart2" class="chart"></svg></div>
+      <p class="alt-note">Scatter plot showing GDP per capita vs happiness score for 2019. Nordic countries appear in coral in the top-right cluster, outperforming countries with similar GDP.</p>
     </section>
 
     <section class="panel reveal">
@@ -224,7 +234,7 @@
       <p>Non-income factors are strong and balanced across Nordic countries.</p>
       <p class="insight-title">The real secret isn't money &mdash; it's trust and community</p>
       <div class="chart-wrap"><svg id="chart3" class="chart"></svg></div>
-      <p class="alt-note">Nordic countries score highest where it matters most: social support and low corruption.</p>
+      <p class="alt-note">Radar chart comparing Nordic average vs world average across 6 happiness factors. Nordic countries score substantially higher on social support and corruption perception.</p>
     </section>
 
     <section class="panel reveal">
@@ -252,7 +262,10 @@
       </blockquote>
     </section>
 
-    <footer class="source">World Happiness Report 2015&ndash;2019 via Kaggle</footer>
+    <footer class="source">
+      World Happiness Report 2015&ndash;2019 via Kaggle
+      <span class="source-note">Note: data covers 2015&ndash;2019 only. Rankings and scores may have shifted after 2020 due to the COVID-19 pandemic.</span>
+    </footer>
   </main>
 
   <div id="tooltip" class="tooltip"></div>
