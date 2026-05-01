@@ -118,15 +118,6 @@
       font-size: 0.9rem;
     }
 
-    .source-note {
-      display: block;
-      margin-top: 0.45rem;
-      font-size: 0.78rem;
-      color: var(--muted);
-      opacity: 0.92;
-      line-height: 1.4;
-    }
-
     .tooltip {
       position: fixed;
       pointer-events: none;
@@ -226,7 +217,7 @@
       <p>At similar GDP levels, Nordic countries still cluster near the top in happiness.</p>
       <p class="chart2-insight"><strong>Same wealth bracket &mdash; very different happiness scores</strong></p>
       <div class="chart-wrap"><svg id="chart2" class="chart"></svg></div>
-      <p class="alt-note">Scatter plot showing GDP per capita vs happiness score for 2019. Nordic countries appear in coral in the top-right cluster, outperforming countries with similar GDP.</p>
+      <p class="alt-note">Scatter plot showing GDP per capita vs. happiness score for 2019. Nordic countries (coral) appear in the top cluster, outperforming countries with similar wealth levels.</p>
     </section>
 
     <section class="panel reveal">
@@ -234,7 +225,7 @@
       <p>Non-income factors are strong and balanced across Nordic countries.</p>
       <p class="insight-title">The real secret isn't money &mdash; it's trust and community</p>
       <div class="chart-wrap"><svg id="chart3" class="chart"></svg></div>
-      <p class="alt-note">Radar chart comparing Nordic average vs world average across 6 happiness factors. Nordic countries score substantially higher on social support and corruption perception.</p>
+      <p class="alt-note">Radar chart comparing Nordic average vs. world average across 6 happiness factors. Nordic countries score substantially higher on social support and freedom.</p>
     </section>
 
     <section class="panel reveal">
@@ -264,7 +255,7 @@
 
     <footer class="source">
       World Happiness Report 2015&ndash;2019 via Kaggle
-      <span class="source-note">Note: data covers 2015&ndash;2019 only. Rankings and scores may have shifted after 2020 due to the COVID-19 pandemic.</span>
+      <p style="margin-top:0.4rem; font-size:0.8rem; color:var(--muted);">Note: data covers 2015&ndash;2019 only. Post-COVID rankings (2020&ndash;2024) may differ.</p>
     </footer>
   </main>
 
@@ -434,54 +425,77 @@
         .attr("font-size", "11px")
         .text(d => d.country);
 
-      const byGdpDesc = [...points].sort((a, b) => b.gdp - a.gdp);
-      const topSlice = byGdpDesc.slice(0, Math.min(16, byGdpDesc.length));
-      let calloutTarget = points.find(d => d.country === "Qatar");
-      if (!calloutTarget) {
-        calloutTarget = topSlice.reduce((a, b) => (a.happiness <= b.happiness ? a : b));
+      const belowHappy7 = points.filter(d => d.happiness < 7.0);
+      const calloutTarget =
+        belowHappy7.length > 0
+          ? belowHappy7.reduce((a, b) => (a.gdp >= b.gdp ? a : b))
+          : null;
+
+      if (calloutTarget) {
+        const tx = x(calloutTarget.gdp);
+        const ty = y(calloutTarget.happiness);
+        const boxW = 198;
+        const boxH = 36;
+        let bx = innerW - 200;
+        let by = innerH * 0.35;
+        if (bx + boxW > innerW - 6) bx = Math.max(6, innerW - boxW - 6);
+        if (by + boxH > innerH - 6) by = Math.max(6, innerH - boxH - 6);
+
+        function anchorOnRectTowardPoint(rx, ry, bw, bh, px, py) {
+          const cx = rx + bw / 2;
+          const cy = ry + bh / 2;
+          const dx = px - cx;
+          const dy = py - cy;
+          if (dx === 0 && dy === 0) return [rx + bw, cy];
+          const halfW = bw / 2;
+          const halfH = bh / 2;
+          const absDx = Math.abs(dx);
+          const absDy = Math.abs(dy);
+          let sx;
+          let sy;
+          if (absDy * halfW <= absDx * halfH) {
+            sx = dx >= 0 ? halfW : -halfW;
+            sy = (sx * dy) / dx;
+          } else {
+            sy = dy >= 0 ? halfH : -halfH;
+            sx = (sy * dx) / dy;
+          }
+          return [cx + sx, cy + sy];
+        }
+
+        const [anchorX, anchorY] = anchorOnRectTowardPoint(bx, by, boxW, boxH, tx, ty);
+        const rDot = calloutTarget.nordic ? 6.5 : 3.8;
+        const ang = Math.atan2(ty - anchorY, tx - anchorX);
+        const lineEndR = rDot + 5;
+        const lineX2 = tx - Math.cos(ang) * lineEndR;
+        const lineY2 = ty - Math.sin(ang) * lineEndR;
+
+        const callout = g.append("g").attr("class", "chart2-callout").style("pointer-events", "none");
+        callout.append("rect")
+          .attr("x", bx)
+          .attr("y", by)
+          .attr("width", boxW)
+          .attr("height", boxH)
+          .attr("rx", 6)
+          .attr("fill", "rgba(10, 22, 40, 0.92)")
+          .attr("stroke", "rgba(159, 180, 211, 0.55)")
+          .attr("stroke-width", 1);
+        callout.append("text")
+          .attr("x", bx + boxW / 2)
+          .attr("y", by + boxH / 2 + 4)
+          .attr("text-anchor", "middle")
+          .attr("fill", "#ffffff")
+          .attr("font-size", "11px")
+          .attr("font-weight", "600")
+          .text("High GDP, lower happiness \u2192");
+        callout.append("line")
+          .attr("x1", anchorX)
+          .attr("y1", anchorY)
+          .attr("x2", lineX2)
+          .attr("y2", lineY2)
+          .attr("stroke", "#D85A30")
+          .attr("stroke-width", 1.75);
       }
-
-      const tx = x(calloutTarget.gdp);
-      const ty = y(calloutTarget.happiness);
-      const boxW = 212;
-      const boxH = 44;
-      const pad = 12;
-      const placeLeft = tx > innerW * 0.52;
-      const bx = placeLeft ? pad : innerW - boxW - pad;
-      const by = 22;
-      const anchorX = placeLeft ? bx + boxW : bx;
-      const anchorY = by + boxH / 2;
-      const ang = Math.atan2(ty - anchorY, tx - anchorX);
-      const rDot = calloutTarget.nordic ? 6.5 : 3.8;
-      const lineEndR = rDot + 5;
-      const lineX2 = tx - Math.cos(ang) * lineEndR;
-      const lineY2 = ty - Math.sin(ang) * lineEndR;
-
-      const callout = g.append("g").attr("class", "chart2-callout").style("pointer-events", "none");
-      callout.append("rect")
-        .attr("x", bx)
-        .attr("y", by)
-        .attr("width", boxW)
-        .attr("height", boxH)
-        .attr("rx", 6)
-        .attr("fill", "rgba(10, 22, 40, 0.92)")
-        .attr("stroke", "rgba(159, 180, 211, 0.55)")
-        .attr("stroke-width", 1);
-      callout.append("text")
-        .attr("x", bx + boxW / 2)
-        .attr("y", by + boxH / 2 + 4)
-        .attr("text-anchor", "middle")
-        .attr("fill", "#ffffff")
-        .attr("font-size", "12px")
-        .attr("font-weight", "600")
-        .text("High wealth, lower happiness");
-      callout.append("line")
-        .attr("x1", anchorX)
-        .attr("y1", anchorY)
-        .attr("x2", lineX2)
-        .attr("y2", lineY2)
-        .attr("stroke", "#D85A30")
-        .attr("stroke-width", 1.75);
     }
 
     function drawChart3(data) {
