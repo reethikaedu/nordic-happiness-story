@@ -1,0 +1,730 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>The Nordic Lock</title>
+  <script src="https://cdn.jsdelivr.net/npm/d3@7"></script>
+  <style>
+    :root {
+      --bg: #0a1628;
+      --text: #ffffff;
+      --muted: #9fb4d3;
+      --accent: #5ad1e6;
+      --accent-2: #f3c969;
+      --nordic: #7ce0cf;
+      --card: #11223a;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      margin: 0;
+      padding: 0;
+      background: var(--bg);
+      color: var(--text);
+      font-family: "Inter", "Segoe UI", Roboto, Arial, sans-serif;
+      scroll-behavior: smooth;
+    }
+
+    .story {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 2rem 1.25rem 4rem;
+    }
+
+    .panel {
+      min-height: 85vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      margin: 1.5rem 0;
+      opacity: 0;
+      transform: translateY(28px);
+      transition: opacity 700ms ease, transform 700ms ease;
+    }
+
+    .panel.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .hero {
+      min-height: 80vh;
+      text-align: left;
+      justify-content: center;
+    }
+
+    h1 {
+      font-family: Georgia, "Times New Roman", serif;
+      font-size: clamp(2rem, 5vw, 4rem);
+      line-height: 1.1;
+      margin: 0 0 1rem;
+      max-width: 18ch;
+    }
+
+    h2 {
+      font-size: clamp(1.3rem, 2.8vw, 2rem);
+      margin: 0 0 0.6rem;
+    }
+
+    p {
+      color: var(--muted);
+      margin: 0.35rem 0 1rem;
+      max-width: 75ch;
+      line-height: 1.55;
+    }
+
+    .chart-wrap {
+      background: linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.01));
+      border: 1px solid rgba(255,255,255,0.1);
+      border-radius: 14px;
+      padding: 0.75rem;
+    }
+
+    .chart {
+      width: 100%;
+      height: 430px;
+    }
+
+    .open-controls {
+      display: flex;
+      gap: 0.8rem;
+      align-items: center;
+      flex-wrap: wrap;
+      margin: 0.25rem 0 1rem;
+    }
+
+    label {
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    select {
+      background: var(--card);
+      color: var(--text);
+      border: 1px solid rgba(255,255,255,0.2);
+      border-radius: 8px;
+      padding: 0.35rem 0.45rem;
+    }
+
+    .source {
+      margin-top: 2rem;
+      padding-top: 1rem;
+      border-top: 1px solid rgba(255,255,255,0.15);
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .tooltip {
+      position: fixed;
+      pointer-events: none;
+      opacity: 0;
+      background: #0f2035;
+      border: 1px solid rgba(255,255,255,0.25);
+      color: var(--text);
+      padding: 0.45rem 0.55rem;
+      border-radius: 8px;
+      font-size: 0.82rem;
+      transition: opacity 120ms ease;
+      z-index: 20;
+    }
+
+    .axis text {
+      fill: #dce7f8;
+      font-size: 11px;
+    }
+
+    .axis path,
+    .axis line {
+      stroke: rgba(255,255,255,0.24);
+    }
+
+    .grid line {
+      stroke: rgba(255,255,255,0.14);
+      stroke-dasharray: 3 3;
+    }
+
+    .legend {
+      color: var(--muted);
+      font-size: 0.85rem;
+      margin: 0.4rem 0 0.1rem;
+    }
+
+    .annotation-strong {
+      margin-top: 0.75rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+
+    .alt-note {
+      margin-top: 0.35rem;
+      color: var(--muted);
+      font-size: 0.92rem;
+    }
+
+    .insight-title {
+      margin: 0.35rem 0 0.75rem;
+      font-size: clamp(1.05rem, 2.2vw, 1.35rem);
+      font-weight: 600;
+      color: var(--text);
+      max-width: 75ch;
+      line-height: 1.35;
+    }
+
+    .chart2-insight {
+      margin: 0.35rem 0 0.85rem;
+      color: var(--text);
+      font-size: clamp(1.02rem, 2vw, 1.2rem);
+      line-height: 1.35;
+      max-width: 75ch;
+    }
+
+    .takeaway-quote {
+      margin: 0 auto;
+      padding: 1.75rem 1.75rem 1.75rem 2.25rem;
+      border-left: 4px solid #D85A30;
+      color: #ffffff;
+      font-size: clamp(1.35rem, 3.2vw, 2rem);
+      line-height: 1.45;
+      text-align: center;
+      max-width: 52ch;
+    }
+  </style>
+</head>
+<body>
+  <main class="story">
+    <section class="panel hero visible">
+      <h1>Wealth doesn't buy happiness &mdash; but Nordic countries have something money can't replicate</h1>
+      <p>
+        This story follows a Martini Glass shape: a guided narrative first, then hands-on exploration.
+        Scroll to see why the Nordic advantage is not only about GDP.
+      </p>
+    </section>
+
+    <section class="panel reveal">
+      <h2>1) A global map reveals where happiness concentrates</h2>
+      <p>Average happiness scores across 2015-2019 show one cluster staying darkest year after year.</p>
+      <div class="chart-wrap"><svg id="chart1" class="chart"></svg></div>
+      <p class="annotation-strong"><strong>The same 5 Nordic countries have ranked in the top 10 every single year.</strong></p>
+      <p class="alt-note">World map showing happiness scores. Nordic countries consistently appear darkest, indicating highest happiness.</p>
+    </section>
+
+    <section class="panel reveal">
+      <h2>2) Money helps, but it is not the full story</h2>
+      <p>At similar GDP levels, Nordic countries still cluster near the top in happiness.</p>
+      <p class="chart2-insight"><strong>Same wealth bracket &mdash; very different happiness scores</strong></p>
+      <div class="chart-wrap"><svg id="chart2" class="chart"></svg></div>
+    </section>
+
+    <section class="panel reveal">
+      <h2>3) The "lock" appears social: trust, support, freedom</h2>
+      <p>Non-income factors are strong and balanced across Nordic countries.</p>
+      <p class="insight-title">The real secret isn't money &mdash; it's trust and community</p>
+      <div class="chart-wrap"><svg id="chart3" class="chart"></svg></div>
+      <p class="alt-note">Nordic countries score highest where it matters most: social support and low corruption.</p>
+    </section>
+
+    <section class="panel reveal">
+      <h2>Open Exploration</h2>
+      <p>Choose any year and metric to explore what predicts happiness across all countries.</p>
+      <div class="open-controls">
+        <label for="yearSelect">Year</label>
+        <select id="yearSelect"></select>
+        <label for="metricSelect">X-axis metric</label>
+        <select id="metricSelect">
+          <option value="GDP per Capita">GDP per Capita</option>
+          <option value="Social Support">Social Support</option>
+          <option value="Healthy Life Expectancy">Healthy Life Expectancy</option>
+          <option value="Freedom">Freedom</option>
+          <option value="Generosity">Generosity</option>
+          <option value="Corruption Perception">Corruption Perception</option>
+        </select>
+      </div>
+      <div class="chart-wrap"><svg id="chart4" class="chart"></svg></div>
+    </section>
+
+    <section class="panel reveal">
+      <blockquote class="takeaway-quote">
+        The Nordic model proves that happiness is built on institutions, not just incomes &mdash; on trust, freedom, and community.
+      </blockquote>
+    </section>
+
+    <footer class="source">World Happiness Report 2015&ndash;2019 via Kaggle</footer>
+  </main>
+
+  <div id="tooltip" class="tooltip"></div>
+
+  <script>
+    const nordic = new Set(["Denmark", "Finland", "Iceland", "Norway", "Sweden"]);
+    const tooltip = d3.select("#tooltip");
+
+    const margin = { top: 28, right: 28, bottom: 54, left: 66 };
+
+    function parseRow(d) {
+      return {
+        year: +d.Year,
+        country: d.Country,
+        region: d.Region,
+        happiness: +d["Happiness Score"],
+        gdp: +d["GDP per Capita"],
+        social: +d["Social Support"],
+        health: +d["Healthy Life Expectancy"],
+        freedom: +d.Freedom,
+        generosity: +d.Generosity,
+        corruption: +d["Corruption Perception"],
+        nordic: nordic.has(d.Country)
+      };
+    }
+
+    function setupSvg(svgId) {
+      const svg = d3.select(svgId);
+      const width = svg.node().clientWidth;
+      const height = svg.node().clientHeight;
+      svg.selectAll("*").remove();
+      const innerW = width - margin.left - margin.right;
+      const innerH = height - margin.top - margin.bottom;
+      const g = svg.append("g").attr("transform", `translate(${margin.left},${margin.top})`);
+      return { svg, g, width, height, innerW, innerH };
+    }
+
+    function showTooltip(event, html) {
+      tooltip
+        .style("opacity", 1)
+        .html(html)
+        .style("left", `${event.clientX + 12}px`)
+        .style("top", `${event.clientY + 12}px`);
+    }
+
+    function hideTooltip() {
+      tooltip.style("opacity", 0);
+    }
+
+    function normalizeCountryName(name) {
+      const map = {
+        "United States of America": "United States",
+        "United Kingdom": "United Kingdom",
+        "Russian Federation": "Russia",
+        "Czechia": "Czech Republic",
+        "Korea, Republic of": "South Korea",
+        "Republic of Korea": "South Korea",
+        "Taiwan": "Taiwan Province of China",
+        "Viet Nam": "Vietnam",
+        "Iran (Islamic Republic of)": "Iran",
+        "Bolivia (Plurinational State of)": "Bolivia",
+        "Venezuela (Bolivarian Republic of)": "Venezuela",
+        "Congo": "Congo (Brazzaville)",
+        "Democratic Republic of the Congo": "Congo (Kinshasa)",
+        "Moldova, Republic of": "Moldova",
+        "Syrian Arab Republic": "Syria",
+        "Lao People's Democratic Republic": "Laos",
+        "Tanzania, United Republic of": "Tanzania",
+        "Palestine": "Palestinian Territories",
+        "North Macedonia": "Macedonia",
+        "Myanmar": "Myanmar",
+        "Swaziland": "Eswatini"
+      };
+      return map[name] || name;
+    }
+
+    function drawChart1(data, worldGeo) {
+      const { g, innerW, innerH } = setupSvg("#chart1");
+      const avgByCountry = d3.rollup(
+        data,
+        v => d3.mean(v, d => d.happiness),
+        d => d.country
+      );
+
+      const scores = Array.from(avgByCountry.values()).filter(Number.isFinite);
+      const minScore = d3.min(scores);
+      const maxScore = d3.max(scores);
+      const color = d3.scaleLinear()
+        .domain([minScore, maxScore])
+        .range(["#e0e0e0", "#D85A30"]);
+
+      const projection = d3.geoNaturalEarth1().fitSize([innerW, innerH], worldGeo);
+      const path = d3.geoPath(projection);
+
+      g.selectAll("path.country")
+        .data(worldGeo.features)
+        .join("path")
+        .attr("class", "country")
+        .attr("d", path)
+        .attr("fill", d => {
+          const name = normalizeCountryName(d.properties.name);
+          const score = avgByCountry.get(name);
+          if (nordic.has(name)) return "#D85A30";
+          return Number.isFinite(score) ? color(score) : "#22374f";
+        })
+        .attr("stroke", "rgba(255,255,255,0.35)")
+        .attr("stroke-width", 0.55)
+        .on("mousemove", (event, d) => {
+          const name = normalizeCountryName(d.properties.name);
+          const score = avgByCountry.get(name);
+          showTooltip(
+            event,
+            `<strong>${name}</strong><br>Avg Happiness (2015-2019): ${Number.isFinite(score) ? score.toFixed(2) : "N/A"}`
+          );
+        })
+        .on("mouseleave", hideTooltip);
+    }
+
+    function drawChart2(data) {
+      const { g, innerW, innerH } = setupSvg("#chart2");
+      const latest = d3.max(data, d => d.year);
+      const points = data.filter(d => d.year === latest);
+
+      const x = d3.scaleLinear().domain(d3.extent(points, d => d.gdp)).nice().range([0, innerW]);
+      const y = d3.scaleLinear().domain(d3.extent(points, d => d.happiness)).nice().range([innerH, 0]);
+
+      g.append("g").attr("class", "grid").call(d3.axisLeft(y).tickSize(-innerW).tickFormat(""));
+      g.append("g").attr("class", "axis").attr("transform", `translate(0,${innerH})`).call(d3.axisBottom(x));
+      g.append("g").attr("class", "axis").call(d3.axisLeft(y));
+
+      g.append("text")
+        .attr("x", innerW / 2)
+        .attr("y", innerH + 44)
+        .attr("text-anchor", "middle")
+        .attr("fill", "#dce7f8")
+        .text("GDP per Capita");
+
+      g.append("text")
+        .attr("transform", "rotate(-90)")
+        .attr("x", -innerH / 2)
+        .attr("y", -45)
+        .attr("text-anchor", "middle")
+        .attr("fill", "#dce7f8")
+        .text("Happiness Score");
+
+      g.selectAll("circle")
+        .data(points)
+        .join("circle")
+        .attr("cx", d => x(d.gdp))
+        .attr("cy", d => y(d.happiness))
+        .attr("r", d => (d.nordic ? 6.5 : 3.8))
+        .attr("fill", d => (d.nordic ? "#D85A30" : "rgba(173,190,219,0.55)"))
+        .attr("stroke", d => (d.nordic ? "#f0896a" : "none"))
+        .attr("stroke-width", d => (d.nordic ? 1.2 : 0))
+        .on("mousemove", (event, d) => {
+          showTooltip(event, `<strong>${d.country}</strong><br>GDP: ${d.gdp.toFixed(2)}<br>Happiness: ${d.happiness.toFixed(2)}`);
+        })
+        .on("mouseleave", hideTooltip);
+
+      g.selectAll(".label")
+        .data(points.filter(d => d.nordic))
+        .join("text")
+        .attr("x", d => x(d.gdp) + 8)
+        .attr("y", d => y(d.happiness) - 6)
+        .attr("fill", "#f0896a")
+        .attr("font-size", "11px")
+        .text(d => d.country);
+
+      const byGdpDesc = [...points].sort((a, b) => b.gdp - a.gdp);
+      const topSlice = byGdpDesc.slice(0, Math.min(16, byGdpDesc.length));
+      let calloutTarget = points.find(d => d.country === "Qatar");
+      if (!calloutTarget) {
+        calloutTarget = topSlice.reduce((a, b) => (a.happiness <= b.happiness ? a : b));
+      }
+
+      const tx = x(calloutTarget.gdp);
+      const ty = y(calloutTarget.happiness);
+      const boxW = 212;
+      const boxH = 44;
+      const pad = 12;
+      const placeLeft = tx > innerW * 0.52;
+      const bx = placeLeft ? pad : innerW - boxW - pad;
+      const by = 22;
+      const anchorX = placeLeft ? bx + boxW : bx;
+      const anchorY = by + boxH / 2;
+      const ang = Math.atan2(ty - anchorY, tx - anchorX);
+      const rDot = calloutTarget.nordic ? 6.5 : 3.8;
+      const lineEndR = rDot + 5;
+      const lineX2 = tx - Math.cos(ang) * lineEndR;
+      const lineY2 = ty - Math.sin(ang) * lineEndR;
+
+      const callout = g.append("g").attr("class", "chart2-callout").style("pointer-events", "none");
+      callout.append("rect")
+        .attr("x", bx)
+        .attr("y", by)
+        .attr("width", boxW)
+        .attr("height", boxH)
+        .attr("rx", 6)
+        .attr("fill", "rgba(10, 22, 40, 0.92)")
+        .attr("stroke", "rgba(159, 180, 211, 0.55)")
+        .attr("stroke-width", 1);
+      callout.append("text")
+        .attr("x", bx + boxW / 2)
+        .attr("y", by + boxH / 2 + 4)
+        .attr("text-anchor", "middle")
+        .attr("fill", "#ffffff")
+        .attr("font-size", "12px")
+        .attr("font-weight", "600")
+        .text("High wealth, lower happiness");
+      callout.append("line")
+        .attr("x1", anchorX)
+        .attr("y1", anchorY)
+        .attr("x2", lineX2)
+        .attr("y2", lineY2)
+        .attr("stroke", "#D85A30")
+        .attr("stroke-width", 1.75);
+    }
+
+    function drawChart3(data) {
+      const svg = d3.select("#chart3");
+      const width = svg.node().clientWidth;
+      const height = svg.node().clientHeight;
+      svg.selectAll("*").remove();
+
+      const year = 2019;
+      const rows = data.filter(d => d.year === year);
+      if (!rows.length) return;
+
+      const nordicRows = rows.filter(d => d.nordic);
+
+      const axes = [
+        { key: "social", label: "Social Support" },
+        { key: "freedom", label: "Freedom" },
+        { key: "corruption", label: "Corruption Perception" },
+        { key: "health", label: "Healthy Life Expectancy" },
+        { key: "gdp", label: "GDP per Capita" },
+        { key: "generosity", label: "Generosity" }
+      ];
+
+      const maxByKey = {};
+      axes.forEach(a => {
+        const m = d3.max(rows, d => d[a.key]);
+        maxByKey[a.key] = m > 0 ? m : 1e-9;
+      });
+
+      const worldSeries = axes.map(a => {
+        const v = d3.mean(rows, d => d[a.key]);
+        return Number.isFinite(v) ? v / maxByKey[a.key] : 0;
+      });
+      const nordicSeries = axes.map(a => {
+        const v = d3.mean(nordicRows, d => d[a.key]);
+        return Number.isFinite(v) ? v / maxByKey[a.key] : 0;
+      });
+
+      const cx = width / 2;
+      const cy = height / 2;
+      const r = Math.min(width, height) / 2 - 78;
+      const n = axes.length;
+      const angleSlice = (Math.PI * 2) / n;
+
+      function angleFor(i) {
+        return -Math.PI / 2 + i * angleSlice;
+      }
+
+      function spokePoint(i, norm01) {
+        const ang = angleFor(i);
+        const t = Math.max(0, Math.min(1, norm01));
+        return [cx + Math.cos(ang) * r * t, cy + Math.sin(ang) * r * t];
+      }
+
+      const root = svg.append("g");
+
+      [0.25, 0.5, 0.75, 1].forEach(t => {
+        root.append("circle")
+          .attr("cx", cx)
+          .attr("cy", cy)
+          .attr("r", r * t)
+          .attr("fill", "none")
+          .attr("stroke", "rgba(255,255,255,0.12)");
+      });
+
+      for (let i = 0; i < n; i++) {
+        const [sx, sy] = spokePoint(i, 1);
+        root.append("line")
+          .attr("x1", cx)
+          .attr("y1", cy)
+          .attr("x2", sx)
+          .attr("y2", sy)
+          .attr("stroke", "rgba(255,255,255,0.15)");
+      }
+
+      const lineGen = d3.line().curve(d3.curveLinearClosed);
+      const worldPoly = worldSeries.map((v, i) => spokePoint(i, v));
+      const nordicPoly = nordicSeries.map((v, i) => spokePoint(i, v));
+
+      const layerWorld = root.append("g").attr("class", "radar-layer-world");
+      layerWorld.append("path")
+        .datum(worldPoly)
+        .attr("d", lineGen)
+        .attr("fill", "rgba(154,176,207,0.5)")
+        .attr("stroke", "#9fb4d3")
+        .attr("stroke-width", 2.5)
+        .attr("stroke-linejoin", "round");
+
+      const layerNordic = root.append("g").attr("class", "radar-layer-nordic");
+      layerNordic.append("path")
+        .datum(nordicPoly)
+        .attr("d", lineGen)
+        .attr("fill", "rgba(216,90,48,0.2)")
+        .attr("stroke", "#D85A30")
+        .attr("stroke-width", 2.5)
+        .attr("stroke-linejoin", "round");
+
+      axes.forEach((a, i) => {
+        const ang = angleFor(i);
+        const lr = r + 32;
+        const tlx = cx + Math.cos(ang) * lr;
+        const tly = cy + Math.sin(ang) * lr;
+        const c = Math.cos(ang);
+        const s = Math.sin(ang);
+        let anchor = "middle";
+        if (c > 0.25) anchor = "start";
+        else if (c < -0.25) anchor = "end";
+        let baseline = "middle";
+        if (s > 0.25) baseline = "hanging";
+        else if (s < -0.25) baseline = "auto";
+        root.append("text")
+          .attr("x", tlx)
+          .attr("y", tly)
+          .attr("text-anchor", anchor)
+          .attr("dominant-baseline", baseline)
+          .attr("fill", "#dce7f8")
+          .attr("font-size", "10px")
+          .text(a.label);
+      });
+
+      const leg = root.append("g").attr("transform", "translate(14, 18)");
+      leg.append("rect")
+        .attr("width", 11)
+        .attr("height", 11)
+        .attr("rx", 2)
+        .attr("fill", "rgba(216,90,48,0.2)")
+        .attr("stroke", "#D85A30")
+        .attr("stroke-width", 1);
+      leg.append("text")
+        .attr("x", 16)
+        .attr("y", 10)
+        .attr("fill", "#dce7f8")
+        .attr("font-size", "11px")
+        .text("Nordic avg");
+      leg.append("rect")
+        .attr("y", 18)
+        .attr("width", 11)
+        .attr("height", 11)
+        .attr("rx", 2)
+        .attr("fill", "rgba(154,176,207,0.5)")
+        .attr("stroke", "#9fb4d3")
+        .attr("stroke-width", 1);
+      leg.append("text")
+        .attr("x", 16)
+        .attr("y", 28)
+        .attr("fill", "#9fb4d3")
+        .attr("font-size", "11px")
+        .text("World avg");
+    }
+
+    function drawChart4(data) {
+      const yearSelect = d3.select("#yearSelect");
+      const metricSelect = d3.select("#metricSelect");
+      const years = Array.from(new Set(data.map(d => d.year))).sort(d3.ascending);
+
+      yearSelect.selectAll("option")
+        .data(years)
+        .join("option")
+        .attr("value", d => d)
+        .text(d => d);
+
+      yearSelect.property("value", d3.max(years));
+
+      const metricMap = {
+        "GDP per Capita": "gdp",
+        "Social Support": "social",
+        "Healthy Life Expectancy": "health",
+        "Freedom": "freedom",
+        "Generosity": "generosity",
+        "Corruption Perception": "corruption"
+      };
+
+      function renderOpen() {
+        const { g, innerW, innerH } = setupSvg("#chart4");
+        const selectedYear = +yearSelect.property("value");
+        const metricName = metricSelect.property("value");
+        const key = metricMap[metricName];
+        const points = data.filter(d => d.year === selectedYear).filter(d => Number.isFinite(d[key]));
+
+        const x = d3.scaleLinear().domain(d3.extent(points, d => d[key])).nice().range([0, innerW]);
+        const y = d3.scaleLinear().domain(d3.extent(points, d => d.happiness)).nice().range([innerH, 0]);
+
+        g.append("g").attr("class", "grid").call(d3.axisLeft(y).tickSize(-innerW).tickFormat(""));
+        g.append("g").attr("class", "axis").attr("transform", `translate(0,${innerH})`).call(d3.axisBottom(x));
+        g.append("g").attr("class", "axis").call(d3.axisLeft(y));
+
+        g.append("text")
+          .attr("x", innerW / 2)
+          .attr("y", innerH + 44)
+          .attr("text-anchor", "middle")
+          .attr("fill", "#dce7f8")
+          .text(metricName);
+
+        g.append("text")
+          .attr("transform", "rotate(-90)")
+          .attr("x", -innerH / 2)
+          .attr("y", -45)
+          .attr("text-anchor", "middle")
+          .attr("fill", "#dce7f8")
+          .text("Happiness Score");
+
+        g.selectAll("circle")
+          .data(points)
+          .join("circle")
+          .attr("cx", d => x(d[key]))
+          .attr("cy", d => y(d.happiness))
+          .attr("r", d => (d.nordic ? 6.2 : 4))
+          .attr("fill", d => (d.nordic ? "#D85A30" : "rgba(154,176,207,0.62)"))
+          .attr("stroke", d => (d.nordic ? "#f0896a" : "none"))
+          .attr("stroke-width", d => (d.nordic ? 1.2 : 0))
+          .on("mousemove", (event, d) => {
+            showTooltip(event, `<strong>${d.country}</strong><br>${metricName}: ${d[key].toFixed(2)}<br>Happiness: ${d.happiness.toFixed(2)}`);
+          })
+          .on("mouseleave", hideTooltip);
+      }
+
+      yearSelect.on("change", renderOpen);
+      metricSelect.on("change", renderOpen);
+      renderOpen();
+    }
+
+    function setupRevealAnimations() {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add("visible");
+          }
+        });
+      }, { threshold: 0.2 });
+
+      document.querySelectorAll(".reveal").forEach(section => observer.observe(section));
+    }
+
+    const dataPath = "data/happiness_clean.csv";
+    const worldPath = "https://raw.githubusercontent.com/holtzy/D3-graph-gallery/master/DATA/world.geojson";
+
+    Promise.all([
+      d3.csv(dataPath, parseRow).catch(() => d3.csv("happiness_clean.csv", parseRow)),
+      d3.json(worldPath)
+    ]).then(([data, worldGeo]) => {
+      drawChart1(data, worldGeo);
+      drawChart2(data);
+      drawChart3(data);
+      drawChart4(data);
+      setupRevealAnimations();
+
+      window.addEventListener("resize", () => {
+        drawChart1(data, worldGeo);
+        drawChart2(data);
+        drawChart3(data);
+        drawChart4(data);
+      });
+    }).catch((err) => {
+      console.error(err);
+      document.body.insertAdjacentHTML("beforeend", "<p style='padding:1rem;color:#ffb4b4'>Failed to load map or happiness data.</p>");
+    });
+  </script>
+</body>
+</html>
