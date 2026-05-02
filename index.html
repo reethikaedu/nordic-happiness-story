@@ -86,7 +86,27 @@
 
     .chart {
       width: 100%;
-      height: 430px;
+      height: 480px;
+    }
+
+    .chart-context {
+      color: var(--muted);
+      font-size: 0.95rem;
+      margin: 0 0 0.65rem;
+      max-width: 75ch;
+      line-height: 1.45;
+    }
+
+    .key-insight-box {
+      margin-top: 0.85rem;
+      padding: 0.85rem 1rem;
+      background: rgba(10, 22, 40, 0.96);
+      border: 1px solid #D85A30;
+      border-radius: 10px;
+      color: var(--muted);
+      font-size: 0.95rem;
+      line-height: 1.45;
+      max-width: 75ch;
     }
 
     .open-controls {
@@ -127,14 +147,14 @@
       color: var(--text);
       padding: 0.45rem 0.55rem;
       border-radius: 8px;
-      font-size: 0.82rem;
+      font-size: 13px;
       transition: opacity 120ms ease;
       z-index: 20;
     }
 
     .axis text {
       fill: #dce7f8;
-      font-size: 11px;
+      font-size: 13px;
     }
 
     .axis path,
@@ -205,32 +225,46 @@
     </section>
 
     <section class="panel reveal">
-      <h2>1) A global map reveals where happiness concentrates</h2>
-      <p>Average happiness scores across 2015-2019 show one cluster staying darkest year after year.</p>
+      <h2>1) Top 10 happiest countries in 2019</h2>
+      <p>Rankings from the World Happiness Report show who leads on overall life evaluation for a single year.</p>
+      <p class="insight-title">Finland leads a Nordic sweep &mdash; 5 of the world's top 10 happiest nations are Nordic.</p>
+      <p class="chart-context">Bars show 2019 happiness scores (longer bar = higher score). Coral marks Finland, Denmark, Norway, Sweden, and Iceland.</p>
       <div class="chart-wrap"><svg id="chart1" class="chart"></svg></div>
+      <div class="key-insight-box">Nordic countries dominate the top rankings every year &mdash; not by luck, but by design: strong social systems, low corruption, and personal freedom.</div>
+      <p class="alt-note">Horizontal bar chart of the top 10 countries by happiness score in 2019. Nordic countries are shown in coral; other countries in steel blue.</p>
+    </section>
+
+    <section class="panel reveal">
+      <h2>2) A global map reveals where happiness concentrates</h2>
+      <p>Average happiness scores across 2015&ndash;2019 show one cluster staying darkest year after year.</p>
+      <p class="chart-context">Each country is colored by its average happiness score. Look for the darkest cluster in northern Europe.</p>
+      <div class="chart-wrap"><svg id="chart2" class="chart"></svg></div>
       <p class="annotation-strong"><strong>The same 5 Nordic countries have ranked in the top 10 every single year.</strong></p>
       <p class="alt-note">World map showing happiness scores. Nordic countries consistently appear darkest, indicating highest happiness.</p>
     </section>
 
     <section class="panel reveal">
-      <h2>2) Money helps, but it is not the full story</h2>
+      <h2>3) Money helps, but it is not the full story</h2>
       <p>At similar GDP levels, Nordic countries still cluster near the top in happiness.</p>
+      <p class="chart-context">Each dot is one country in 2019. Notice where the coral Nordic dots sit compared to other wealthy nations.</p>
       <p class="chart2-insight"><strong>Same wealth bracket &mdash; very different happiness scores</strong></p>
-      <div class="chart-wrap"><svg id="chart2" class="chart"></svg></div>
+      <div class="chart-wrap"><svg id="chart3" class="chart"></svg></div>
       <p class="alt-note">Scatter plot showing GDP per capita vs. happiness score for 2019. Nordic countries (coral) appear in the top cluster, outperforming countries with similar wealth levels.</p>
     </section>
 
     <section class="panel reveal">
-      <h2>3) The "lock" appears social: trust, support, freedom</h2>
+      <h2>4) The &ldquo;lock&rdquo; appears social: trust, support, freedom</h2>
       <p>Non-income factors are strong and balanced across Nordic countries.</p>
+      <p class="chart-context">The two shapes show Nordic average vs. world average across 6 factors. The gap tells the real story.</p>
       <p class="insight-title">The real secret isn't money &mdash; it's trust and community</p>
-      <div class="chart-wrap"><svg id="chart3" class="chart"></svg></div>
+      <div class="chart-wrap"><svg id="chart4" class="chart"></svg></div>
       <p class="alt-note">Radar chart comparing Nordic average vs. world average across 6 happiness factors. Nordic countries score substantially higher on social support and freedom.</p>
     </section>
 
     <section class="panel reveal">
-      <h2>Open Exploration</h2>
+      <h2>5) Open Exploration</h2>
       <p>Choose any year and metric to explore what predicts happiness across all countries.</p>
+      <p class="chart-context">Swap the year and x-axis metric to scan every country. Nordic points stay coral so you can track them against any driver.</p>
       <div class="open-controls">
         <label for="yearSelect">Year</label>
         <select id="yearSelect"></select>
@@ -244,7 +278,7 @@
           <option value="Corruption Perception">Corruption Perception</option>
         </select>
       </div>
-      <div class="chart-wrap"><svg id="chart4" class="chart"></svg></div>
+      <div class="chart-wrap"><svg id="chart5" class="chart"></svg></div>
     </section>
 
     <section class="panel reveal">
@@ -333,8 +367,94 @@
       return map[name] || name;
     }
 
-    function drawChart1(data, worldGeo) {
-      const { g, innerW, innerH } = setupSvg("#chart1");
+    function drawBarChart2019(data) {
+      const svg = d3.select("#chart1");
+      const barMargin = { top: 22, right: 52, bottom: 48, left: 12 };
+      const width = svg.node().clientWidth;
+      const height = svg.node().clientHeight;
+      svg.selectAll("*").remove();
+      const innerW = width - barMargin.left - barMargin.right;
+      const innerH = height - barMargin.top - barMargin.bottom;
+      const g = svg.append("g").attr("transform", `translate(${barMargin.left},${barMargin.top})`);
+
+      const year = 2019;
+      const rows = data.filter(d => d.year === year && Number.isFinite(d.happiness));
+      if (!rows.length) return;
+
+      const sorted = [...rows].sort((a, b) => b.happiness - a.happiness);
+      const top10 = sorted.slice(0, 10);
+
+      const labelColW = 122;
+      const scorePad = 6;
+      const barStart = labelColW + 8;
+      const barEnd = innerW - 4;
+      const x = d3.scaleLinear()
+        .domain([0, d3.max(top10, d => d.happiness)])
+        .nice()
+        .range([barStart, barEnd]);
+
+      const y = d3.scaleBand()
+        .domain(top10.map(d => d.country))
+        .range([0, innerH])
+        .padding(0.25);
+
+      g.append("g")
+        .attr("class", "grid")
+        .attr("transform", `translate(0,${innerH})`)
+        .call(d3.axisBottom(x).tickSize(-innerH).tickFormat(""))
+        .call(grid => grid.select(".domain").remove());
+
+      g.append("g")
+        .attr("class", "axis")
+        .attr("transform", `translate(0,${innerH})`)
+        .call(d3.axisBottom(x));
+
+      g.append("text")
+        .attr("x", (barStart + barEnd) / 2)
+        .attr("y", innerH + 40)
+        .attr("text-anchor", "middle")
+        .attr("fill", "#dce7f8")
+        .attr("font-size", "13px")
+        .text("Happiness Score (2019)");
+
+      const row = g.selectAll("g.bar-row")
+        .data(top10)
+        .join("g")
+        .attr("class", "bar-row")
+        .attr("transform", d => `translate(0,${y(d.country)})`);
+
+      row.append("text")
+        .attr("x", labelColW)
+        .attr("y", y.bandwidth() / 2)
+        .attr("text-anchor", "end")
+        .attr("dominant-baseline", "middle")
+        .attr("fill", "#dce7f8")
+        .attr("font-size", "12px")
+        .text(d => d.country);
+
+      row.append("rect")
+        .attr("x", barStart)
+        .attr("y", 0)
+        .attr("height", y.bandwidth())
+        .attr("width", d => Math.max(0, x(d.happiness) - barStart))
+        .attr("rx", 4)
+        .attr("fill", d => (d.nordic ? "#D85A30" : "#4a7fa5"))
+        .on("mousemove", (event, d) => {
+          showTooltip(event, `<strong>${d.country}</strong><br>Happiness: ${d.happiness.toFixed(2)}`);
+        })
+        .on("mouseleave", hideTooltip);
+
+      row.append("text")
+        .attr("x", d => x(d.happiness) + scorePad)
+        .attr("y", y.bandwidth() / 2)
+        .attr("dominant-baseline", "middle")
+        .attr("fill", "#dce7f8")
+        .attr("font-size", "12px")
+        .text(d => d.happiness.toFixed(2));
+    }
+
+    function drawChartMap(data, worldGeo) {
+      const { g, innerW, innerH } = setupSvg("#chart2");
       const avgByCountry = d3.rollup(
         data,
         v => d3.mean(v, d => d.happiness),
@@ -375,8 +495,8 @@
         .on("mouseleave", hideTooltip);
     }
 
-    function drawChart2(data) {
-      const { g, innerW, innerH } = setupSvg("#chart2");
+    function drawChartScatter(data) {
+      const { g, innerW, innerH } = setupSvg("#chart3");
       const latest = d3.max(data, d => d.year);
       const points = data.filter(d => d.year === latest);
 
@@ -392,6 +512,7 @@
         .attr("y", innerH + 44)
         .attr("text-anchor", "middle")
         .attr("fill", "#dce7f8")
+        .attr("font-size", "13px")
         .text("GDP per Capita");
 
       g.append("text")
@@ -400,6 +521,7 @@
         .attr("y", -45)
         .attr("text-anchor", "middle")
         .attr("fill", "#dce7f8")
+        .attr("font-size", "13px")
         .text("Happiness Score");
 
       g.selectAll("circle")
@@ -485,7 +607,7 @@
           .attr("y", by + boxH / 2 + 4)
           .attr("text-anchor", "middle")
           .attr("fill", "#ffffff")
-          .attr("font-size", "11px")
+          .attr("font-size", "13px")
           .attr("font-weight", "600")
           .text("High GDP, lower happiness \u2192");
         callout.append("line")
@@ -498,8 +620,8 @@
       }
     }
 
-    function drawChart3(data) {
-      const svg = d3.select("#chart3");
+    function drawChartRadar(data) {
+      const svg = d3.select("#chart4");
       const width = svg.node().clientWidth;
       const height = svg.node().clientHeight;
       svg.selectAll("*").remove();
@@ -612,7 +734,7 @@
           .attr("text-anchor", anchor)
           .attr("dominant-baseline", baseline)
           .attr("fill", "#dce7f8")
-          .attr("font-size", "10px")
+          .attr("font-size", "13px")
           .text(a.label);
       });
 
@@ -628,7 +750,7 @@
         .attr("x", 16)
         .attr("y", 10)
         .attr("fill", "#dce7f8")
-        .attr("font-size", "11px")
+        .attr("font-size", "13px")
         .text("Nordic avg");
       leg.append("rect")
         .attr("y", 18)
@@ -642,11 +764,11 @@
         .attr("x", 16)
         .attr("y", 28)
         .attr("fill", "#9fb4d3")
-        .attr("font-size", "11px")
+        .attr("font-size", "13px")
         .text("World avg");
     }
 
-    function drawChart4(data) {
+    function drawChartOpen(data) {
       const yearSelect = d3.select("#yearSelect");
       const metricSelect = d3.select("#metricSelect");
       const years = Array.from(new Set(data.map(d => d.year))).sort(d3.ascending);
@@ -669,7 +791,7 @@
       };
 
       function renderOpen() {
-        const { g, innerW, innerH } = setupSvg("#chart4");
+        const { g, innerW, innerH } = setupSvg("#chart5");
         const selectedYear = +yearSelect.property("value");
         const metricName = metricSelect.property("value");
         const key = metricMap[metricName];
@@ -687,6 +809,7 @@
           .attr("y", innerH + 44)
           .attr("text-anchor", "middle")
           .attr("fill", "#dce7f8")
+          .attr("font-size", "13px")
           .text(metricName);
 
         g.append("text")
@@ -695,6 +818,7 @@
           .attr("y", -45)
           .attr("text-anchor", "middle")
           .attr("fill", "#dce7f8")
+          .attr("font-size", "13px")
           .text("Happiness Score");
 
         g.selectAll("circle")
@@ -736,17 +860,19 @@
       d3.csv(dataPath, parseRow).catch(() => d3.csv("happiness_clean.csv", parseRow)),
       d3.json(worldPath)
     ]).then(([data, worldGeo]) => {
-      drawChart1(data, worldGeo);
-      drawChart2(data);
-      drawChart3(data);
-      drawChart4(data);
+      drawBarChart2019(data);
+      drawChartMap(data, worldGeo);
+      drawChartScatter(data);
+      drawChartRadar(data);
+      drawChartOpen(data);
       setupRevealAnimations();
 
       window.addEventListener("resize", () => {
-        drawChart1(data, worldGeo);
-        drawChart2(data);
-        drawChart3(data);
-        drawChart4(data);
+        drawBarChart2019(data);
+        drawChartMap(data, worldGeo);
+        drawChartScatter(data);
+        drawChartRadar(data);
+        drawChartOpen(data);
       });
     }).catch((err) => {
       console.error(err);
